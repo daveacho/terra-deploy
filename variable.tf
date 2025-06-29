@@ -1,1 +1,1 @@
-variable "AWS_REGION" {}
+variable "aws_region" {}
