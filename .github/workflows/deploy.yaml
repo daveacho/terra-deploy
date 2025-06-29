@@ -52,7 +52,7 @@ on:
       destroy:
         description: 'Set to "true" to destroy infrastructure'
         required: false
-        default: 'false'
+        default: 'true'
         type: boolean
 
 jobs:
