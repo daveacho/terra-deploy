@@ -89,14 +89,13 @@ jobs:
       # Generate Terraform plan (only for apply)
       - name: Terraform Plan
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.destroy != 'true'
-        run: terraform plan -out=tfplan -var="aws_region=${{ secrets.AWS_REGION }}"
+        run: terraform plan -out=tfplan 
 
       # Apply Terraform changes (on push to main or workflow_dispatch with destroy=false)
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' && github.event.inputs.destroy != 'true'
-        run: terraform apply -auto-approve tfplan -var="aws_region=${{ secrets.AWS_REGION }}"
-
+        run: terraform apply -auto-approve tfplan 
       # Destroy Terraform infrastructure (on workflow_dispatch with destroy=true)
       - name: Terraform Destroy
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true'
-        run: terraform destroy -auto-approve -var="aws_region=${{ secrets.AWS_REGION }}"
+        run: terraform destroy -auto-approve 
