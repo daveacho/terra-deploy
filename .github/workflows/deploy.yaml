@@ -28,3 +28,12 @@ jobs:
       - name: Initialize terraform scripts
         run: terraform init
 
+      - name: formatting terraform script
+        run: terraform fmt
+
+      - name: validating terraform script
+        run: terraform validate
+
+      - name: applying terraform script
+        run: terraform apply --auto-approve
+
