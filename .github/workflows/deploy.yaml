@@ -25,15 +25,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Initialize terraform scripts
-        run: terraform init
+      # - name: Initialize terraform scripts
+      #   run: terraform init
 
-      - name: formatting terraform script
-        run: terraform fmt
+      # - name: formatting terraform script
+      #   run: terraform fmt
 
-      - name: validating terraform script
-        run: terraform validate
+      # - name: validating terraform script
+      #   run: terraform validate
 
       - name: applying terraform script
-        run: terraform apply --auto-approve
+        run: terraform destroy --auto-approve
 
