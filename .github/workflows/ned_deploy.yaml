@@ -60,7 +60,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: terraform plan -no-color -out=tfplan
 
-            # Add a comment to pull requests with plan results
+            # Add a comment to pull requests with plan results pls work
       - name: add-plan-comment
         id: comment
         uses: actions/github-script@v3
