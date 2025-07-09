@@ -52,7 +52,7 @@ jobs:
         run: terraform validate -no-color
 
 
-      # Run Terraform plan for pull requests
+      # Run Terraform plan for pull request
       - name: Terraform Plan
         id: plan
         if: github.event_name == 'pull_request'
