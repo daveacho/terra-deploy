@@ -1,8 +1,8 @@
 resource "aws_default_vpc" "myApp" {
 
-  tags = {
-    Name = "myApp"
-  }
+  # tags = {
+  #   Name = "myApp"
+  # }
 }
 
 
@@ -14,17 +14,17 @@ data "aws_availability_zones" "myApp" {
 resource "aws_default_subnet" "default_az1" {
   availability_zone = data.aws_availability_zones.myApp.names[0]
 
-  tags = {
-    Name = "Default subnet for eu-west-2a"
-  }
+  # tags = {
+  #   Name = "Default subnet for eu-west-2a"
+  # }
 }
 
 resource "aws_default_subnet" "default_az2" {
   availability_zone = data.aws_availability_zones.myApp.names[1]
 
-  tags = {
-    Name = "Default subnet for eu-west-2b"
-  }
+  # tags = {
+  #   Name = "Default subnet for eu-west-2b"
+  # }
 }
 
 resource "aws_security_group" "myApp" {
