@@ -59,7 +59,7 @@ jobs:
         run: terraform plan -no-color -out=tfplan
 
 
-      # Add a comment to pull requests with plan results
+      # Add a comment to pull requests with plan resultsss
       - name: Add Plan Comment
         id: comment
         uses: actions/github-script@v6
