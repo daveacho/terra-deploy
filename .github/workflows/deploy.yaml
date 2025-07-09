@@ -38,64 +38,64 @@
 #         run: terraform destroy --auto-approve
 
 
-name: Deploy or Destroy Terraform Infrastructure
+# name: Deploy or Destroy Terraform Infrastructure
 
-on:
-  # push:
-  #   branches:
-  #     - main
-  # pull_request:
-  #   branches:
-  #     - main
-  workflow_dispatch:
-    inputs:
-      destroy:
-        description: 'Set to "true" to destroy infrastructure'
-        required: false
-        default: 'true'
-        type: boolean
+# on:
+#   # push:
+#   #   branches:
+#   #     - main
+#   # pull_request:
+#   #   branches:
+#   #     - main
+#   workflow_dispatch:
+#     inputs:
+#       destroy:
+#         description: 'Set to "true" to destroy infrastructure'
+#         required: false
+#         default: 'true'
+#         type: boolean
 
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
+# jobs:
+#   terraform:
+#     runs-on: ubuntu-latest
 
-    steps:
-      # Checkout the repository
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       # Checkout the repository
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      # Set up Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.5.7
+#       # Set up Terraform
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: 1.5.7
 
-      # Configure AWS credentials
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+#       # Configure AWS credentials
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Initialize Terraform
-      - name: Terraform Init
-        run: terraform init
+#       # Initialize Terraform
+#       - name: Terraform Init
+#         run: terraform init
 
-      # Validate Terraform configuration
-      - name: Terraform Validate
-        run: terraform validate
+#       # Validate Terraform configuration
+#       - name: Terraform Validate
+#         run: terraform validate
 
-      # Generate Terraform plan (only for apply)
-      - name: Terraform Plan
-        if: github.event_name != 'workflow_dispatch' || github.event.inputs.destroy != 'true'
-        run: terraform plan -out=tfplan 
+#       # Generate Terraform plan (only for apply)
+#       - name: Terraform Plan
+#         if: github.event_name != 'workflow_dispatch' || github.event.inputs.destroy != 'true'
+#         run: terraform plan -out=tfplan 
 
-      # Apply Terraform changes (on push to main or workflow_dispatch with destroy=false)
-      - name: Terraform Apply
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' && github.event.inputs.destroy != 'true'
-        run: terraform apply -auto-approve tfplan 
-      # Destroy Terraform infrastructure (on workflow_dispatch with destroy=true)
-      - name: Terraform Destroy
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true'
-        run: terraform destroy -auto-approve 
+#       # Apply Terraform changes (on push to main or workflow_dispatch with destroy=false)
+#       - name: Terraform Apply
+#         if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' && github.event.inputs.destroy != 'true'
+#         run: terraform apply -auto-approve tfplan 
+#       # Destroy Terraform infrastructure (on workflow_dispatch with destroy=true)
+#       - name: Terraform Destroy
+#         if: github.event_name == 'workflow_dispatch' && github.event.inputs.destroy == 'true'
+#         run: terraform destroy -auto-approve 
