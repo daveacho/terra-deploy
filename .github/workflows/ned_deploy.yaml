@@ -1,0 +1,328 @@
+name: Terraform AWS
+
+on: [push, pull_request]
+
+env:
+  TF_LOG: INFO
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+
+    # defaults:
+    #   run:
+    #     shell: bash
+    #     working-directory: ./terraform
+
+    steps:
+      # Checkout the repository
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Set up Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      # Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Initialize Terraform with S3 backend
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="key=${{ secrets.TF_STATE_KEY }}" -backend-config="region=${{ secrets.AWS_REGION }}" use_lockfile "true"
+
+      # Run Terraform format
+      - name: Terraform Format
+        id: fmt
+        if: github.ref != 'refs/heads/main'
+        run: terraform fmt -check
+
+      # Run Terraform validate
+      - name: Terraform Validate
+        id: validate
+        if: github.ref != 'refs/heads/main' && (success() || failure())
+        run: terraform validate -no-color
+
+
+      # Run Terraform plan for pull requests
+      - name: Terraform Plan
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color -out=tfplan
+
+
+      # Add a comment to pull requests with plan results
+      - name: Add Plan Comment
+        id: comment
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`\n${process.env.PLAN}\n\`\`\`
+
+            </details>
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      # On push to main, build or change infrastructure according to Terraform configuration files
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+
+
+# name: Terraform AWS
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+
+# env:
+#   TF_LOG: INFO
+
+# jobs:
+#   terraform:
+#     name: Terraform
+#     runs-on: ubuntu-latest
+
+#     defaults:
+#       run:
+#         shell: bash
+#         working-directory: ./terraform
+
+#     steps:
+#       # Checkout the repository
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       # Set up Terraform
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: "1.6.6"
+
+#       # Configure AWS credentials
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
+
+#       # Initialize Terraform with S3 backend
+#       - name: Terraform Init
+#         id: init
+#         run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="key=${{ secrets.TF_STATE_KEY }}" -backend-config="region=${{ secrets.AWS_REGION }}" -backend-config="dynamodb_table=${{ secrets.TF_DYNAMODB_TABLE }}"
+
+#       # Run Terraform format
+#       - name: Terraform Format
+#         id: fmt
+#         if: github.ref != 'refs/heads/main'
+#         run: terraform fmt -check
+
+#       # Run Terraform validate
+#       - name: Terraform Validate
+#         id: validate
+#         if: github.ref != 'refs/heads/main' && (success() || failure())
+#         run: terraform validate -no-color
+
+#       # Run Terraform plan for pull requests
+#       - name: Terraform Plan
+#         id: plan
+#         if: github.event_name == 'pull_request'
+#         run: |
+#           terraform plan -no-color -out=tfplan \
+#             -var="aws_region=${{ secrets.AWS_REGION }}" \
+#             -var="s3_bucket=${{ secrets.S3_BUCKET }}" \
+#             -var="influxdb_url=${{ secrets.INFLUXDB_URL }}" \
+#             -var="influxdb_token=${{ secrets.INFLUXDB_TOKEN }}" \
+#             -var="influxdb_org=${{ secrets.INFLUXDB_ORG }}"
+#         env:
+#           TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+#           TF_VAR_s3_bucket: ${{ secrets.S3_BUCKET }}
+#           TF_VAR_influxdb_url: ${{ secrets.INFLUXDB_URL }}
+#           TF_VAR_influxdb_token: ${{ secrets.INFLUXDB_TOKEN }}
+#           TF_VAR_influxdb_org: ${{ secrets.INFLUXDB_ORG }}
+
+#       # Add a comment to pull requests with plan results
+#       - name: Add Plan Comment
+#         id: comment
+#         uses: actions/github-script@v6
+#         if: github.event_name == 'pull_request'
+#         env:
+#           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           script: |
+#             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+#             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+#             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+#             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+
+#             <details><summary>Show Plan</summary>
+
+#             \`\`\`\n${process.env.PLAN}\n\`\`\`
+
+#             </details>
+
+#             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+
+#             await github.rest.issues.createComment({
+#               issue_number: context.issue.number,
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               body: output
+#             });
+
+#       # Apply Terraform changes on push to main
+#       - name: Terraform Apply
+#         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#         run: |
+#           terraform apply -auto-approve tfplan \
+#             -var="aws_region=${{ secrets.AWS_REGION }}" \
+#             -var="s3_bucket=${{ secrets.S3_BUCKET }}" \
+#             -var="influxdb_url=${{ secrets.INFLUXDB_URL }}" \
+#             -var="influxdb_token=${{ secrets.INFLUXDB_TOKEN }}" \
+#             -var="influxdb_org=${{ secrets.INFLUXDB_ORG }}"
+#         env:
+#           TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+#           TF_VAR_s3_bucket: ${{ secrets.S3_BUCKET }}
+#           TF_VAR_influxdb_url: ${{ secrets.INFLUXDB_URL }}
+#           TF_VAR_influxdb_token: ${{ secrets.INFLUXDB_TOKEN }}
+#           TF_VAR_influxdb_org: ${{ secrets.INFLUXDB_ORG }}
+
+
+
+# name: 'Terraform'
+
+# on: [push, pull_request]
+
+# env:
+#   TF_LOG: INFO
+
+# jobs:
+#   terraform:
+#     name: 'Terraform'
+#     runs-on: ubuntu-latest
+
+#     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+#     # Set the working directory to main for the config files
+#     defaults:
+#       run:
+#         shell: bash
+#         working-directory: ./main
+
+#     steps:
+#     # Checkout the repository to the GitHub Actions runner
+#     - name: Checkout
+#       uses: actions/checkout@v2
+
+#     # Install the preferred version of Terraform CLI 
+#     - name: Setup Terraform
+#       uses: hashicorp/setup-terraform@v3
+#       with:
+#         terraform_version: "1.1.7"
+
+#     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
+#     - name: Terraform Init
+#       id: init
+#       env:
+#         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+#         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+#         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+#         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+#         RESOURCE_GROUP: ${{ secrets.RESOURCE_GROUP }}
+#         STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
+#         CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+#       run: terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP"
+
+#     # Run terraform format
+#     - name: Terraform format
+#       id: fmt
+#       if: github.ref != 'refs/heads/main'
+#       run: terraform fmt -check
+
+#       # Run terraform validate
+#     - name: Terraform validate
+#       id: validate
+#       if: github.ref != 'refs/heads/main' && (success() || failure())
+#       run: terraform validate -no-color
+
+#     # Run a terraform plan for pull requests only
+#     - name: Terraform Plan
+#       id: plan
+#       env:
+#         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+#         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+#         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+#         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+#       if: github.event_name == 'pull_request'
+#       run: terraform plan -no-color
+    
+#     # Add a comment to pull requests with plan results
+#     - name: add-plan-comment
+#       id: comment
+#       uses: actions/github-script@v3
+#       if: github.event_name == 'pull_request'
+#       env:
+#         PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+#       with:
+#         github-token: ${{ secrets.GITHUB_TOKEN }}
+#         script: |
+#           const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+#           #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+#           #### Terraform Validation 🤖${{ steps.validate.outputs.stdout }}
+#           #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+      
+#           <details><summary>Show Plan</summary>
+          
+#           \`\`\`${process.env.PLAN}\`\`\`
+          
+#           </details>
+          
+#           *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+            
+#           github.issues.createComment({
+#             issue_number: context.issue.number,
+#             owner: context.repo.owner,
+#             repo: context.repo.repo,
+#             body: output
+#           })
+
+#       # On push to main, build or change infrastructure according to Terraform configuration files
+#     - name: Terraform Apply
+#       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#       env:
+#         ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+#         ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+#         ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+#         ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+#       run: terraform apply -auto-approve
