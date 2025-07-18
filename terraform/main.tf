@@ -99,3 +99,8 @@ resource "aws_instance" "myAppTwo" {
     Name = "myAppTwo"
   }
 }
+
+resource "aws_s3_bucket" "test_bucket" {
+  bucket        = "my-test-random-bucket-a-a-a"
+  force_destroy = true
+}
