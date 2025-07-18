@@ -120,3 +120,16 @@ resource "aws_instance" "myAppone" {
   }
 }
 
+resource "aws_instance" "myAppthree" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_default_subnet.default_az1.id
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.myApp.id]
+  key_name                    = aws_key_pair.pk.key_name
+
+  tags = {
+    Name = "myAppthree"
+  }
+}
+
