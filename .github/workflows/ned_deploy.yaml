@@ -1,151 +1,151 @@
-name: Terraform AWS
+# name: Terraform AWS
 
-on: [push, pull_request]
+# on: [push, pull_request]
 
-env:
-  TF_LOG: INFO
+# env:
+#   TF_LOG: INFO
 
-jobs:
-  terraform:
-    name: Terraform
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write        # Required to create issue comments
-      pull-requests: write  # Required to interact with pull requests
-      contents: read       # Required for actions/checkout
+# jobs:
+#   terraform:
+#     name: Terraform
+#     runs-on: ubuntu-latest
+#     permissions:
+#       issues: write        # Required to create issue comments
+#       pull-requests: write  # Required to interact with pull requests
+#       contents: read       # Required for actions/checkout
 
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./terraform
+#     defaults:
+#       run:
+#         shell: bash
+#         working-directory: ./terraform
 
-    steps:
-      # Checkout the repository
-      - name: Checkout
-        uses: actions/checkout@v4
+#     steps:
+#       # Checkout the repository
+#       - name: Checkout
+#         uses: actions/checkout@v4
 
-      # Set up Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.6"
+#       # Set up Terraform
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: "1.6.6"
 
-      # Configure AWS credentials
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+#       # Configure AWS credentials
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Initialize Terraform with S3 backend
-      - name: Terraform Init
-        id: init
-        run: terraform init
-        # run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="key=${{ secrets.TF_STATE_KEY }}" -backend-config="region=${{ secrets.AWS_REGION }}" use_lockfile "true"
+#       # Initialize Terraform with S3 backend
+#       - name: Terraform Init
+#         id: init
+#         run: terraform init
+#         # run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="key=${{ secrets.TF_STATE_KEY }}" -backend-config="region=${{ secrets.AWS_REGION }}" use_lockfile "true"
 
-      # Run Terraform format
-      - name: Terraform Format
-        id: fmt
-        if: github.ref != 'refs/heads/main'
-        run: terraform fmt
-        # run: terraform fmt -check
+#       # Run Terraform format
+#       - name: Terraform Format
+#         id: fmt
+#         if: github.ref != 'refs/heads/main'
+#         run: terraform fmt
+#         # run: terraform fmt -check
 
-      # Run Terraform validate
-      - name: Terraform Validate
-        id: validate
-        if: github.ref != 'refs/heads/main' && (success() || failure())
-        run: terraform validate -no-color
+#       # Run Terraform validate
+#       - name: Terraform Validate
+#         id: validate
+#         if: github.ref != 'refs/heads/main' && (success() || failure())
+#         run: terraform validate -no-color
 
 
-      # Run Terraform plan for pull request
-      - name: Terraform Plan
-        id: plan
-        if: github.event_name == 'pull_request'
-        run: terraform plan -no-color -out=tfplan
+#       # Run Terraform plan for pull request
+#       - name: Terraform Plan
+#         id: plan
+#         if: github.event_name == 'pull_request'
+#         run: terraform plan -no-color -out=tfplan
 
-      # # Upload tfplan as an artifact
-      # - name: Upload Terraform Plan
-      #   if: github.event_name == 'pull_request'
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: terraform-plan
-      #     path: terraform/tfplan
-      #     retention-days: 1
+#       # # Upload tfplan as an artifact
+#       # - name: Upload Terraform Plan
+#       #   if: github.event_name == 'pull_request'
+#       #   uses: actions/upload-artifact@v4
+#       #   with:
+#       #     name: terraform-plan
+#       #     path: terraform/tfplan
+#       #     retention-days: 1
 
-      #       # Add a comment to pull requests with plan results pls workss
-      # - name: add-plan-comment
-      #   id: comment
-      #   uses: actions/github-script@v3
-      #   if: github.event_name == 'pull_request'
-      #   env:
-      #     PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     script: |
-      #       const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-      #       #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-      #       #### Terraform Validation 🤖${{ steps.validate.outputs.stdout }}
-      #       #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+#       #       # Add a comment to pull requests with plan results pls workss
+#       # - name: add-plan-comment
+#       #   id: comment
+#       #   uses: actions/github-script@v3
+#       #   if: github.event_name == 'pull_request'
+#       #   env:
+#       #     PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+#       #   with:
+#       #     github-token: ${{ secrets.GITHUB_TOKEN }}
+#       #     script: |
+#       #       const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+#       #       #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+#       #       #### Terraform Validation 🤖${{ steps.validate.outputs.stdout }}
+#       #       #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
         
-      #       <details><summary>Show Plan</summary>
+#       #       <details><summary>Show Plan</summary>
             
-      #       \`\`\`${process.env.PLAN}\`\`\`
+#       #       \`\`\`${process.env.PLAN}\`\`\`
             
-      #       </details>
+#       #       </details>
             
-      #       *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
+#       #       *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Working Directory: \`${{ env.tf_actions_working_dir }}\`, Workflow: \`${{ github.workflow }}\`*`;
               
-      #       github.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: output
-      #       })
+#       #       github.issues.createComment({
+#       #         issue_number: context.issue.number,
+#       #         owner: context.repo.owner,
+#       #         repo: context.repo.repo,
+#       #         body: output
+#       #       })
 
 
-      # Add a comment to pull requests with plan resultsss
-      - name: Add Plan Comment
-        id: comment
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
-        env:
-          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+#       # Add a comment to pull requests with plan resultsss
+#       - name: Add Plan Comment
+#         id: comment
+#         uses: actions/github-script@v6
+#         if: github.event_name == 'pull_request'
+#         env:
+#           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           script: |
+#             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+#             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+#             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+#             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+#             <details><summary>Show Plan</summary>
 
-            \`\`\`\n${process.env.PLAN}\n\`\`\`
+#             \`\`\`\n${process.env.PLAN}\n\`\`\`
 
-            </details>
+#             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+#             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
+#             await github.rest.issues.createComment({
+#               issue_number: context.issue.number,
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               body: output
+#             });
 
-      # # Download tfplan artifact on pull request merge
-      # - name: Download Terraform Plan
-      #   if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: terraform-plan
-      #     path: terraform/
+#       # # Download tfplan artifact on pull request merge
+#       # - name: Download Terraform Plan
+#       #   if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+#       #   uses: actions/download-artifact@v4
+#       #   with:
+#       #     name: terraform-plan
+#       #     path: terraform/
 
-      # On push to main, build or change infrastructure according to Terraform configuration files
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform destroy -auto-approve
+#       # On push to main, build or change infrastructure according to Terraform configuration files
+#       - name: Terraform Apply
+#         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+#         run: terraform destroy -auto-approve
 
 
 # name: Terraform AWS
