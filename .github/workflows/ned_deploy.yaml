@@ -14,10 +14,10 @@ jobs:
       pull-requests: write  # Required to interact with pull requests
       contents: read       # Required for actions/checkout
 
-    # defaults:
-    #   run:
-    #     shell: bash
-    #     working-directory: ./terraform
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
 
     steps:
       # Checkout the repository
