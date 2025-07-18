@@ -105,7 +105,7 @@ resource "aws_s3_bucket" "test_bucket" {
   force_destroy = true
 }
 
-resource "aws_instance" "myAppTwo" {
+resource "aws_instance" "myAppone" {
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = "t2.micro"
   subnet_id                   = aws_default_subnet.default_az1.id
@@ -116,7 +116,7 @@ resource "aws_instance" "myAppTwo" {
   #user_data_replace_on_change = true
 
   tags = {
-    Name = "myAppTwo"
+    Name = "myAppone"
   }
 }
 
