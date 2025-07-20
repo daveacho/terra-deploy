@@ -13,6 +13,10 @@ on:
         description: 'Terraform action (apply or destroy)'
         required: true
         default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
 
 jobs:
   terraform:
@@ -35,8 +39,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.6.6"
-          terraform_wrapper: false # Disable wrapper to capture plan output
+          terraform_version: "1.12.2"
+          # terraform_wrapper: false # Disable wrapper to capture plan output
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4 # Updated to latest stable version

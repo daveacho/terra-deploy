@@ -4,7 +4,7 @@ terraform {
     key    = "statefile/terraform.tfstate"
     #profile = "terraform-user"
     region = "eu-west-2"
-    #use_lockfile = true
+    use_lockfile = true
   }
 }
 
