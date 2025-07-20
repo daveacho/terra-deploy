@@ -105,20 +105,20 @@ resource "aws_s3_bucket" "test_bucket" {
   force_destroy = true
 }
 
-# resource "aws_instance" "myAppone" {
-#   ami                         = data.aws_ami.ubuntu.id
-#   instance_type               = "t2.micro"
-#   subnet_id                   = aws_default_subnet.default_az1.id
-#   associate_public_ip_address = true
-#   vpc_security_group_ids      = [aws_security_group.myApp.id]
-#   key_name                    = aws_key_pair.pk.key_name
-#   #user_data                   = local.app_user_data
-#   #user_data_replace_on_change = true
+resource "aws_instance" "myAppone" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = "t2.micro"
+  subnet_id                   = aws_default_subnet.default_az1.id
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.myApp.id]
+  key_name                    = aws_key_pair.pk.key_name
+  #user_data                   = local.app_user_data
+  #user_data_replace_on_change = true
 
-#   tags = {
-#     Name = "myAppone"
-#   }
-# }
+  tags = {
+    Name = "myAppone"
+  }
+}
 
 # resource "aws_instance" "myAppthree" {
 #   ami                         = data.aws_ami.ubuntu.id
