@@ -114,116 +114,116 @@
 #           fi
 
 
-name: Terraform Apply and Destroy
+# name: Terraform Apply and Destroy
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Terraform action (apply or destroy)'
-        required: true
-        default: 'apply'
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+#   workflow_dispatch:
+#     inputs:
+#       action:
+#         description: 'Terraform action (apply or destroy)'
+#         required: true
+#         default: 'apply'
 
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write        # Required to create issue comments
-      pull-requests: write  # Required to interact with pull requests
-      contents: read       # Required for actions/checkout
-    defaults:
-      run:
-        working-directory: ./terraform
+# jobs:
+#   terraform:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       issues: write        # Required to create issue comments
+#       pull-requests: write  # Required to interact with pull requests
+#       contents: read       # Required for actions/checkout
+#     defaults:
+#       run:
+#         working-directory: ./terraform
 
-    steps:
-      # Checkout the repository
-      - name: Checkout code
-        uses: actions/checkout@v4
+#     steps:
+#       # Checkout the repository
+#       - name: Checkout code
+#         uses: actions/checkout@v4
 
-      # Set up Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.6.6"
-          terraform_wrapper: false # Disable wrapper to capture plan output
+#       # Set up Terraform
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: "1.6.6"
+#           terraform_wrapper: false # Disable wrapper to capture plan output
 
-      # Configure AWS credentials
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+#       # Configure AWS credentials
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Run terraform fmt -check
-      - name: Terraform Format
-        id: fmt
-        run: terraform fmt -check -recursive
-        continue-on-error: false # Fail if formatting is incorrect
+#       # Run terraform fmt -check
+#       - name: Terraform Format
+#         id: fmt
+#         run: terraform fmt -check -recursive
+#         continue-on-error: false # Fail if formatting is incorrect
 
-      # Initialize Terraform
-      - name: Terraform Init
-        id: init
-        run: terraform init
+#       # Initialize Terraform
+#       - name: Terraform Init
+#         id: init
+#         run: terraform init
 
-      # Run terraform validate
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
+#       # Run terraform validate
+#       - name: Terraform Validate
+#         id: validate
+#         run: terraform validate -no-color
 
-      # Generate Terraform plan and capture output
-      - name: Terraform Plan
-        id: plan
-        run: |
-          if [ "${{ github.event.inputs.action || 'apply' }}" == "destroy" ]; then
-            terraform plan -destroy -out=tfplan -no-color > plan-output.txt
-          else
-            terraform plan -out=tfplan -no-color > plan-output.txt
-          fi
-        continue-on-error: true # Allow plan to fail for PRs to show changes
+#       # Generate Terraform plan and capture output
+#       - name: Terraform Plan
+#         id: plan
+#         run: |
+#           if [ "${{ github.event.inputs.action || 'apply' }}" == "destroy" ]; then
+#             terraform plan -destroy -out=tfplan -no-color > plan-output.txt
+#           else
+#             terraform plan -out=tfplan -no-color > plan-output.txt
+#           fi
+#         continue-on-error: true # Allow plan to fail for PRs to show changes
 
-      # Add a comment to pull requests with plan results
-      - name: Add Plan Comment
-        id: comment
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const planOutput = fs.readFileSync('terraform/plan-output.txt', 'utf8');
-            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+#       # Add a comment to pull requests with plan results
+#       - name: Add Plan Comment
+#         id: comment
+#         if: github.event_name == 'pull_request'
+#         uses: actions/github-script@v7
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           script: |
+#             const fs = require('fs');
+#             const planOutput = fs.readFileSync('terraform/plan-output.txt', 'utf8');
+#             const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+#             #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+#             #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+#             #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+#             <details><summary>Show Plan</summary>
 
-            \`\`\`terraform\n${planOutput}\n\`\`\`
+#             \`\`\`terraform\n${planOutput}\n\`\`\`
 
-            </details>
+#             </details>
 
-            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
+#             *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`, Workflow: \`${{ github.workflow }}\`*`;
 
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            });
+#             await github.rest.issues.createComment({
+#               issue_number: context.issue.number,
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               body: output
+#             });
 
-      # Apply or Destroy (only for push or workflow_dispatch)
-      - name: Terraform Apply or Destroy
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: |
-          if [ "${{ github.event.inputs.action || 'apply' }}" == "destroy" ]; then
-            terraform destroy -auto-approve
-          else
-            terraform apply -auto-approve tfplan
-          fi
+#       # Apply or Destroy (only for push or workflow_dispatch)
+#       - name: Terraform Apply or Destroy
+#         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+#         run: |
+#           if [ "${{ github.event.inputs.action || 'apply' }}" == "destroy" ]; then
+#             terraform destroy -auto-approve
+#           else
+#             terraform apply -auto-approve tfplan
+#           fi
