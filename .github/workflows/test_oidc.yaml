@@ -67,7 +67,7 @@ jobs:
         id: validate
         run: terraform validate -no-color
 
-      # Generate Terraform plan and capture output
+      # Generate Terraform plan and capture outputs
       - name: Terraform Plan
         id: plan
         run: |
